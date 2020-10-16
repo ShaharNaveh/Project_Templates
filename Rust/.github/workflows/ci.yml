@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  RUST_BACKTRACE: 1
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  style:
+    name: Check style
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
+      - name: Install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt
+
+      - name: Lint source code
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  test:
+    name: Test ${{ matrix.rust }} on ${{ matrix.os }}
+    needs: [style]
+    strategy:
+      matrix:
+        rust:
+          - stable
+
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macOS-latest
+
+        include:
+          - rust: stable
+            features: ""
+            benchmark: true
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
+      - name: Install rust (${{ matrix.rust }})
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+
+      - name: Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: ${{ matrix.features }}
+
+      - name: Benchmark
+        if: matrix.benchmark
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --benches ${{ matrix.features }}
+
+  documentation:
+    name: Build documentation
+    needs: [style, test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
+      - name: Install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Rustdoc
+        uses: actions-rs/cargo@v1
+        with:
+          command: rustdoc
