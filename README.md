@@ -1,2 +1,2 @@
 # Project_Templates
-My projects template for diffrent programing languages
+My projects template for different programing languages
