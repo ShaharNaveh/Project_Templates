@@ -1,0 +1,10 @@
+black
+flake8
+ipython
+isort
+mypy
+pip
+pytest
+pytest-cov
+setuptools
+wheel
